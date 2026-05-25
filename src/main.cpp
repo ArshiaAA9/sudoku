@@ -1,24 +1,43 @@
 #include <SFML/Window.hpp>
+#include <cstdint>
 #include <iostream>
 #include <print>
 #include <random>
+#include <string>
 
-#include "game.hpp"
+#include "sudoku.hpp"
+
+void play(Sudoku game) {
+    uint32_t seed;
+    std::string prompt;
+    std::print("do you want to enter a seed?(y/N)");
+    std::cin >> prompt;
+    if (prompt == "y") {
+        std::print("enter a seed: ");
+        std::cin >> seed;
+        // NOTE: you should validate the seed first
+        game.generateSudoku(seed, 5);
+        game.printBoard();
+    } else {
+        game.generateSudoku(20);
+        game.printBoard();
+    }
+}
 
 int main() {
-    int seed;
-    std::print("enter seed:");
 
-    std::cin >> seed;
     std::random_device r{};
 
-    Game game{seed};
-    game.setValue(0, 0, 2);
-    game.setValue(3, 1, 2);
-    game.setValue(6, 2, 2);
+    Sudoku game{};
+    play(game);
 
-    game.setValue(0, 8, 3);
-    game.setValue(3, 7, 3);
-    game.setValue(6, 6, 3);
-    game.printBoard();
+    std::string prompt;
+    while (true) {
+        std::print("do you want to play again?(y/N)");
+        std::cin >> prompt;
+        if (prompt == "y") {
+            play(game);
+        } else
+            break;
+    }
 }

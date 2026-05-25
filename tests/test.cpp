@@ -2,11 +2,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
-#include "game.hpp"
+#include "sudoku.hpp"
 #include "types.hpp"
 
 TEST_CASE("validating values", "[isValid]") {
-    Game game{};
+    Sudoku game{};
     game.clearBoard();
 
     // test
@@ -35,7 +35,8 @@ TEST_CASE("validating values", "[isValid]") {
 // goes over the board and checks if all are correct
 TEST_CASE("generating full board", "[fillBoard]") {
 
-    Game game{};
+    Sudoku game{};
+    game.generateSudoku(5);
     game.printBoard();
     int currentValue;
     for (size_t x = 0; x < GRID_SIZE; x++) {
