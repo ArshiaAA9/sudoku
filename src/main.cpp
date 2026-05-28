@@ -73,12 +73,9 @@ void gameLoop(Sudoku game, Tui tui) {
 
 int main() {
     Sudoku game{};
-    game.generateSudoku(39);
+    game.generateSudoku(39, 1);
     Tui tui{};
-    // tui.render(game.board());
     tui.run(game.board());
-    // tui.button();
-    // tui.render(game.board());
     // game.printBoard();
     std::atexit([] {
         // FTXUI leaves cursor blinking on exit in Wezterm, reset fixes it

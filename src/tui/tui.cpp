@@ -74,7 +74,7 @@ ft::Element Tui::createMainDom(const BoardType& board) {
             ft::filler(),
             ft::hbox({
                 ft::filler(),
-                gridbox(fillGridCells(board)) | ft::center | ft::borderStyled(ft::Color::Yellow),
+                gridbox(fillGridWithGrid(board)) | ft::center | ft::borderStyled(ft::HEAVY, ft::Color::White),
                 ft::filler(),
             }),
             ft::filler(),
@@ -82,9 +82,49 @@ ft::Element Tui::createMainDom(const BoardType& board) {
     return document;
 }
 
-std::vector<std::vector<ft::Element>> Tui::fillGridCells(const BoardType& board) {
+ft::Element Tui::createGridBox(const BoardType& board, unsigned int startingCol, unsigned int startingRow) {
     std::vector<ft::Elements> result;
-    result.reserve(81);
+
+    constexpr int CELL_WIDTH = 4;
+    constexpr int CELL_HEIGHT = 2;
+    // constexpr int FILLER_WIDTH = 1;
+
+    // const ft::Element filler = ft::filler() | size(ft::HEIGHT, ft::EQUAL, FILLER_WIDTH);
+
+    for (size_t row = startingRow * 3; row < startingRow * 3 + 3; row++) {
+        ft::Elements currentRow;
+        for (size_t col = startingCol * 3; col < startingCol * 3 + 3; col++) {
+            ft::Element text = (board[col][row] == 0) ? ft::text(" ") : ft::text(std::to_string(board[col][row]));
+
+            text |= ft::size(ft::WIDTH, ft::GREATER_THAN, CELL_WIDTH);
+            text |= ft::size(ft::HEIGHT, ft::GREATER_THAN, CELL_HEIGHT);
+            // text |= ft::flex;
+            text |= ft::center;
+
+            if (col == m_selectedCol && row == m_selectedRow) text |= ft::bgcolor(ft::Color::Cyan);
+            // text |= ft::borderHeavy;
+
+            // const ft::Element current = hbox(text, filler);
+            // text = hbox(text);
+            currentRow.push_back(text);
+            if (col == startingCol * 3 + 2) continue;
+            currentRow.push_back(ft::separatorLight() | color(ft::Color::White));
+        }
+
+        result.push_back(currentRow);
+        ft::Elements separatorRow;
+        separatorRow.reserve(6);
+        for (int i = 0; i < 6; i++) {
+            separatorRow.push_back(ft::separatorLight() | color(ft::Color::White));
+        }
+        result.push_back(separatorRow);
+    }
+
+    return gridbox(result);
+}
+
+std::vector<ft::Elements> Tui::fillGridWithGrid(const BoardType& board) {
+    std::vector<ft::Elements> result;
 
     constexpr int CELL_WIDTH = 3;
     constexpr int CELL_HEIGHT = 1;
@@ -92,32 +132,26 @@ std::vector<std::vector<ft::Element>> Tui::fillGridCells(const BoardType& board)
 
     const ft::Element filler = ft::filler() | size(ft::HEIGHT, ft::EQUAL, FILLER_WIDTH);
 
-    for (size_t row = 0; row < GRID_SIZE; row++) {
+    for (size_t blockRow = 0; blockRow < 3; blockRow++) {
         ft::Elements currentRow;
-        for (size_t col = 0; col < GRID_SIZE; col++) {
-            ft::Element text = (board[col][row] == 0) ? ft::text(" ") : ft::text(std::to_string(board[col][row]));
+        for (size_t blockCol = 0; blockCol < 3; blockCol++) {
+            ft::Element currentGrid = createGridBox(board, blockCol, blockRow);
+            // currentGrid |= ft::center;
+            currentGrid |= ft::size(ft::WIDTH, ft::EQUAL, 16);
+            currentGrid |= ft::size(ft::HEIGHT, ft::EQUAL, 8);
 
-            text |= ft::center;
-            text |= size(ft::WIDTH, ft::EQUAL, CELL_WIDTH);
-            text |= size(ft::HEIGHT, ft::EQUAL, CELL_HEIGHT);
-
-            if (col == m_selectedCol && row == m_selectedRow) text |= ft::bgcolor(ft::Color::Cyan);
-            // text |= ft::borderHeavy;
-
-            const ft::Element current = hbox(text, filler);
-            // const ft::Element current = hbox(text);
-            currentRow.push_back(current);
-            if ((col + 1) % 3 == 0 && col != 8) {
-                currentRow.push_back(ft::hbox({ft::separatorHeavy() | color(ft::Color::Yellow), filler}));
+            currentRow.push_back(currentGrid);
+            if (blockCol != 2) {
+                currentRow.push_back(ft::hbox({ft::separatorHeavy() | color(ft::Color::White), filler}));
             }
         }
         result.push_back(currentRow);
-        if ((row + 1) % 3 == 0 && row != 8) {
-            ft::Elements separatorRow;
-            // 11 is the element count 9 rows + 2 filler
-            separatorRow.reserve(11);
-            for (int i = 0; i < 11; i++) {
-                separatorRow.push_back(ft::separatorHeavy() | color(ft::Color::Yellow));
+        ft::Elements separatorRow;
+        // 11 is the element count 3 rows + 2 filler
+        separatorRow.reserve(10);
+        if (blockRow != 2) {
+            for (int i = 0; i < 5; i++) {
+                separatorRow.push_back(ft::separatorHeavy() | color(ft::Color::White));
             }
             result.push_back(separatorRow);
         }
