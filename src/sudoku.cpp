@@ -4,11 +4,17 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstdint>
 #include <numeric>
 #include <print>
 #include <random>
 
 #include "types.hpp"
+
+bool Sudoku::isInBound(unsigned int col, unsigned int row, unsigned int value) {
+    return (col <= 8) && (row <= 8) && (value <= 9);
+}
 
 void Sudoku::printBoard() const {
     std::print("+---------+---------+---------+\n");
@@ -31,6 +37,7 @@ void Sudoku::printBoard() const {
 
 // col is x value row is y
 bool Sudoku::isValid(unsigned int col, unsigned int row, int value) const {
+    assert((col < GRID_SIZE) && (row < GRID_SIZE) && (value <= 9));
     if (value == 0) return true;
     int startCol = (col / BLOCK_SIZE) * 3;
     int startRow = (row / BLOCK_SIZE) * 3;
@@ -51,8 +58,8 @@ bool Sudoku::isValid(unsigned int col, unsigned int row, int value) const {
     return true;
 }
 
-// returns true on success
-bool Sudoku::setValue(unsigned int col, unsigned int row, int value) {
+bool Sudoku::setValue(unsigned int col, unsigned int row, unsigned int value) {
+    assert((col < GRID_SIZE) && (row < GRID_SIZE) && (value <= 9));
     if (!isValid(col, row, value)) {
         return false;
     }
@@ -69,24 +76,27 @@ void Sudoku::generateSudoku(unsigned int difficulty) {
     std::print("{}\n", randomSeed);
 
     // clear the board from before
-    clearBoard();
+    clearBoards();
     // generate a new one
     fillBoard(0, 0);
+    m_filledBoard = m_board;
     // remove some values
     punchHoles(difficulty);
 }
 
-void Sudoku::generateSudoku(uint32_t seed, unsigned int difficulty) {
+void Sudoku::generateSudoku(unsigned int difficulty, uint32_t seed) {
     m_randEngine.seed(seed);
     m_currentSeed = seed;
     std::print("{}\n", seed);
 
     // clear the board from before
-    clearBoard();
+    clearBoards();
     // generate a new one
     fillBoard(0, 0);
+    m_filledBoard = m_board;
     // remove some values
     punchHoles(difficulty);
+    m_emptyCells = difficulty;
 }
 
 // makes a copy of board and takes in position of current cell
@@ -127,8 +137,8 @@ void Sudoku::punchHoles(unsigned int difficulty) {
     std::shuffle(indices.begin(), indices.end(), m_randEngine);
 
     unsigned int punchedHoles{};
+
     // possibe values to remove
-    size_t i = 0;
     for (unsigned int index : indices) {
         if (punchedHoles == difficulty) return;
         unsigned int col = index % GRID_SIZE;
@@ -143,17 +153,6 @@ void Sudoku::punchHoles(unsigned int difficulty) {
             punchedHoles++;
         }
     }
-
-    // if (punchedHoles == difficulty) return;
-    // // punch hole
-    // unsigned int currentValue = m_board[col][row];
-    // m_board[col][row] = 0;
-    // // put back the value if not multiple solutions
-    // if (!hasOneSolution()) {
-    //     m_board[col][row] = currentValue;
-    // } else {
-    //     punchedHoles++;
-    // }
 }
 
 bool Sudoku::hasOneSolution() {
@@ -187,10 +186,35 @@ void Sudoku::solveForSolutions(unsigned int col, unsigned int row, unsigned int&
     return;
 }
 
-int Sudoku::genValue() { return m_uniformDist(m_randEngine); }
-
-void Sudoku::clearBoard() {
+void Sudoku::clearBoards() {
     for (auto& col : m_board) col.fill(0);
+    for (auto& col : m_filledBoard) col.fill(0);
 }
 
 int Sudoku::readValue(unsigned int col, unsigned row) const { return m_board[col][row]; }
+
+MoveResult Sudoku::insertValue(unsigned int col, unsigned int row, unsigned int value) {
+    assert((col < GRID_SIZE) && (row < GRID_SIZE) && (value <= 9));
+    // check if the cell is empty
+    // if yes insert the value
+    // if the value doesnt equal the original filled board
+    // update m_mistakes and return false
+    if (m_board[col][row] != 0) {
+        return MoveResult::NOT_EMPTY;
+    }
+    // if the value is the same in the filled board then its correct
+    // otherwise its wrong and we add a mistake and increment the mistakes count
+    if (value == m_filledBoard[col][row]) {
+        m_board[col][row] = value;
+        m_emptyCells--;
+        if (m_emptyCells == 0) {
+            // if there are no empty cells left the player has won
+            return MoveResult::WIN;
+        }
+        return MoveResult::SUCCEED;
+    } else {
+        m_mistakesCount++;
+        m_mistakes.insert(std::make_pair(m_mistakesCount, Mistake(col, row, value)));
+        return MoveResult::MISTAKE;
+    }
+}
