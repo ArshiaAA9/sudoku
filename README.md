@@ -18,7 +18,7 @@ cd build
 
 # Controls
 Use 1-9 numbers to make a move in empty cells.
-Move with WASD or arrow keys to move.
+Move with WASD or arrow keys.
 
 
 
