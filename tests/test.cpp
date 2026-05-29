@@ -48,7 +48,6 @@ TEST_CASE("generating full board", "[fillBoard]") {
 }
 
 TEST_CASE("seed consistancy") {
-
     SECTION("same seed produces identical boards") {
         Sudoku::Sudoku game1{};
         Sudoku::Sudoku game2{};
@@ -71,7 +70,7 @@ TEST_CASE("seed consistancy") {
     }
 }
 
-TEST_CASE("hole punching", "[punchHoles)]") {
+TEST_CASE("hole punching", "[punchHoles]") {
     SECTION("hole amounts match difficulty") {
         unsigned int difficulty = 10;
         Sudoku::Sudoku game{};
@@ -85,4 +84,13 @@ TEST_CASE("hole punching", "[punchHoles)]") {
         }
         REQUIRE(emptyValues == difficulty);
     }
+}
+
+TEST_CASE("using fixed seed to check player input related functionalities", "[isPlayerInput]") {
+    Sudoku::Sudoku game{};
+    int seed = 1234;
+    int difficulty = 10;
+    game.generateSudoku(difficulty, seed);
+
+    SECTION("[insertValue]") {}
 }

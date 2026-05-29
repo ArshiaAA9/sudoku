@@ -12,7 +12,10 @@ constexpr int SUBGRID_SIZE = 3;
 using Board = std::array<std::array<unsigned int, GRID_SIZE>, GRID_SIZE>;
 
 struct Cell {
-    Cell() = default;
+    Cell()
+        : col(0)
+        , row(0)
+        , value(0) {}
 
     Cell(unsigned int col, unsigned int row)
         : col(col)
@@ -46,6 +49,7 @@ public:
     void clearBoards();
     void printBoard() const;
     bool isValid(unsigned int col, unsigned int row, int value) const;
+    bool isPlayerInput(unsigned int col, unsigned int row) const;
     int readValue(unsigned int col, unsigned row) const;
 
     // used to insert player move
@@ -64,7 +68,7 @@ public:
 
 private:
     // --- methods ---
-    bool isInBound(unsigned int col, unsigned int row, unsigned int value);
+    void setupBoard(unsigned int difficulty);
     bool fillBoard(unsigned int col, unsigned int row);
     void punchHoles(unsigned int difficulty);
     bool hasOneSolution();
@@ -74,6 +78,8 @@ private:
     Board m_board{};
     // used to check answers against it
     Board m_filledBoard;
+    Board m_initialBoard;
+
     std::mt19937 m_randEngine;
     uint32_t m_currentSeed;
     unsigned int m_emptyCells;

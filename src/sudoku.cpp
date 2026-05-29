@@ -6,7 +6,6 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
-#include <fstream>
 #include <numeric>
 #include <print>
 #include <random>
@@ -20,10 +19,6 @@ const std::unordered_map<unsigned int, Cell>& Sudoku::mistakes() const { return 
 unsigned int Sudoku::mistakeCount() const { return m_mistakesCount; }
 
 int Sudoku::readValue(unsigned int col, unsigned row) const { return m_board[col][row]; }
-
-bool Sudoku::isInBound(unsigned int col, unsigned int row, unsigned int value) {
-    return (col <= 8) && (row <= 8) && (value <= 9);
-}
 
 void Sudoku::printBoard() const {
     std::print("+---------+---------+---------+\n");
@@ -67,6 +62,10 @@ bool Sudoku::isValid(unsigned int col, unsigned int row, int value) const {
     return true;
 }
 
+bool Sudoku::isPlayerInput(unsigned int col, unsigned int row) const {
+    return m_initialBoard[col][row] == 0 && m_board[col][row] != 0;
+}
+
 bool Sudoku::setValue(unsigned int col, unsigned int row, unsigned int value) {
     assert((col < GRID_SIZE) && (row < GRID_SIZE) && (value <= 9));
     if (!isValid(col, row, value)) {
@@ -82,25 +81,18 @@ void Sudoku::generateSudoku(unsigned int difficulty) {
     uint32_t randomSeed = rd();
     m_randEngine.seed(randomSeed);
     m_currentSeed = randomSeed;
-    std::print("{}\n", randomSeed);
 
-    // clear the board from before
-    clearBoards();
-
-    // generate a new one
-    fillBoard(0, 0);
-    m_filledBoard = m_board;
-
-    // remove some values
-    punchHoles(difficulty);
-    m_emptyCells = difficulty;
+    setupBoard(difficulty);
 }
 
 void Sudoku::generateSudoku(unsigned int difficulty, uint32_t seed) {
     m_randEngine.seed(seed);
     m_currentSeed = seed;
-    std::print("{}\n", seed);
 
+    setupBoard(difficulty);
+}
+
+void Sudoku::setupBoard(unsigned int difficulty) {
     // clear the board from before
     clearBoards();
 
@@ -110,6 +102,7 @@ void Sudoku::generateSudoku(unsigned int difficulty, uint32_t seed) {
 
     // remove some values
     punchHoles(difficulty);
+    m_initialBoard = m_board;
     m_emptyCells = difficulty;
 }
 

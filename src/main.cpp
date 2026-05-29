@@ -1,14 +1,7 @@
-#include <cstdint>
-#include <iostream>
-#include <print>
-#include <string>
+#include <string_view>
 
 #include "sudoku.hpp"
 #include "tui/tui.hpp"
-
-/* TODO:
- *  run the tui on a seperate thread from board generation
- * */
 
 // void play(Sudoku& game, Tui tui) {
 //     std::string answer;
@@ -71,13 +64,9 @@
 //     std::println("Goodbye!");
 // }
 
-int main() {
+int main(int argc, char* argv[]) {
     Sudoku::Sudoku game{};
     Tui tui{game};
     tui.run();
-    // game.printBoard();
-    std::atexit([] {
-        // FTXUI leaves cursor blinking on exit in Wezterm, reset fixes it
-        system("reset");
-    });
+    return 0;
 }

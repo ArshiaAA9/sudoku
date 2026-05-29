@@ -43,6 +43,7 @@ target_include_directories(libTui PUBLIC
 )
 
 target_link_libraries(libTui PUBLIC
+    libSudoku
     ftxui::screen
     ftxui::component
     ftxui::dom

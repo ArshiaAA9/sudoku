@@ -1,33 +1,67 @@
 #include "tui.hpp"
 
+#include <chrono>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <mutex>
 #include <string>
-using namespace Sudoku;
+
+using Sudoku::GRID_SIZE;
+using Sudoku::SUBGRID_SIZE;
+
+// --------------------------CONSTRUCTORS--------------------------
+Tui::Tui(Sudoku::Sudoku& game)
+    : m_game(game)
+    , m_board(game.board())
+    , m_difficulty(DEFAULT_DIFFICULTY)
+    , m_logStream(std::ofstream(DEBUG_FILE_PATH))
+    , m_screen(ft::ScreenInteractive::Fullscreen()) {}
 
 // --------------------------PUBLICS--------------------------
 
 void Tui::run() {
+    m_isRunning = true;
+    newGame();
+
+    std::thread timerThread(&Tui::timerLoop, this);
+
     auto renderer = ft::Renderer([&]() { return createMainDom(); });
     auto component = CatchEvent(renderer, [&](const ft::Event event) { return handleEvents(event); });
     m_screen.Loop(component);
+
+    m_isRunning = false;
+    m_cv.notify_all();
+    timerThread.join();
 }
 
 // --------------------------PRIVATES--------------------------
 
 void Tui::newGame() {
-    m_game.generateSudoku(m_difficulty);
+    m_game.generateSudoku(m_difficulty, 1234);
     m_selected.col = CENTER_COL;
     m_selected.row = CENTER_ROW;
     m_selected.value = m_board[CENTER_COL][CENTER_ROW];
+    m_stopwatch.reset();
+    m_stopwatch.start();
+}
+
+void Tui::timerLoop() {
+    while (m_isRunning) {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cv.wait_for(lock, std::chrono::seconds(1));
+        if (m_isRunning) m_screen.PostEvent(ft::Event::Custom);
+    }
 }
 
 bool Tui::handleEvents(const ft::Event& event) {
     if (event == ft::Event::q) {
         m_screen.ExitLoopClosure()();
+        return true;
+    }
+    if (event == ft::Event::Custom) {
         return true;
     }
     if (event == ft::Event::ArrowUp || event == ft::Event::w) {
@@ -80,22 +114,23 @@ void Tui::move(Movement direction) {
             m_selected.col++;
             break;
     }
+    m_selected.value = m_game.readValue(m_selected.col, m_selected.row);
 }
 
 void Tui::handlePlayerInput(unsigned int input) {
-    MoveResult moveRes = m_game.insertValue(m_selected.col, m_selected.row, input);
+    Sudoku::MoveResult moveRes = m_game.insertValue(m_selected.col, m_selected.row, input);
     switch (moveRes) {
-        case MoveResult::NOT_EMPTY:
+        case Sudoku::MoveResult::NOT_EMPTY:
             // do nothing for now
             break;
-        case MoveResult::SUCCEED:
+        case Sudoku::MoveResult::SUCCEED:
             // TODO: add different color for player inputed things
             break;
-        case MoveResult::WIN:
+        case Sudoku::MoveResult::WIN:
             // TODO: prompt user if they want play again.
             newGame();
             break;
-        case MoveResult::MISTAKE:
+        case Sudoku::MoveResult::MISTAKE:
 
             break;
     }
@@ -104,12 +139,11 @@ void Tui::handlePlayerInput(unsigned int input) {
 ft::Element Tui::createMainDom() {
     auto document = border(
         ft::vbox({
-            ft::text("Sudoku") | ft::bold | ft::center,
-            ft::separator(),
             ft::hbox({
                 // change these later
                 ft::text("Mistakes: " + std::to_string(m_game.mistakeCount())) | ft::flex,
-                ft::text("Time: 0:00"),
+                ft::text("Sudoku") | ft::bold | ft::center | ft::flex,
+                ft::text("Time: " + m_stopwatch.format()) | ft::align_right | ft::flex,
             }),
             ft::separator(),
             ft::filler(),
@@ -128,22 +162,26 @@ ft::Element Tui::createSubGrid(unsigned int startingCol, unsigned int startingRo
 
     constexpr int CELL_WIDTH = 7;
     constexpr int CELL_HEIGHT = 3;
-    // constexpr int FILLER_WIDTH = 1;
-
-    // const ft::Element filler = ft::filler() | size(ft::WIDTH, ft::EQUAL, 4) | size(ft::HEIGHT, ft::EQUAL, 2);
 
     for (size_t row = startingRow * SUBGRID_SIZE; row < startingRow * SUBGRID_SIZE + SUBGRID_SIZE; row++) {
         ft::Elements currentRow;
         for (size_t col = startingCol * SUBGRID_SIZE; col < startingCol * SUBGRID_SIZE + SUBGRID_SIZE; col++) {
-            ft::Element text;
-            if (col == m_selected.col && row == m_selected.row) {
-                // selected case
-                // "\u25CB" unicode for "○"
-                text = (m_board[col][row] == 0) ? ft::text("○") : ft::text(std::to_string(m_board[col][row]));
+            bool isSelected = (col == m_selected.col && row == m_selected.row);
+            std::string cellText =
+                (m_board[col][row] == 0) ? (isSelected ? "○" : "") : std::to_string(m_board[col][row]);
+
+            ft::Element text = ft::text(cellText);
+
+            if (isSelected) {
                 text |= ft::color(ft::Color::Red);
 
+            } else if (m_game.readValue(col, row) == m_selected.value && m_selected.value != 0) { // other cells with
+                text |= ft::color(ft::Color::DarkViolet);
+
+            } else if (m_game.isPlayerInput(col, row)) { // player inputted values
+                text |= ft::color(ft::Color::Cyan3);
+
             } else {
-                text = (m_board[col][row] == 0) ? ft::text("") : ft::text(std::to_string(m_board[col][row]));
                 text |= ft::color(ft::Color::Black);
             }
             text |= ft::center;
@@ -176,16 +214,12 @@ std::vector<ft::Elements> Tui::fillGridWithGrid() {
     constexpr int BLOCK_WIDTH = 23;
     constexpr int BLOCK_HEIGHT = 11;
 
-    // const ft::Element filler = ft::filler() | size(ft::HEIGHT, ft::EQUAL, FILLER_WIDTH);
-
     for (size_t blockRow = 0; blockRow < SUBGRID_SIZE; blockRow++) {
         ft::Elements currentRow;
         for (size_t blockCol = 0; blockCol < SUBGRID_SIZE; blockCol++) {
             ft::Element currentBlock = createSubGrid(blockCol, blockRow);
             currentBlock |= ft::size(ft::WIDTH, ft::EQUAL, BLOCK_WIDTH);
             currentBlock |= ft::size(ft::HEIGHT, ft::EQUAL, BLOCK_HEIGHT);
-
-            // currentBlock |= ft::bgcolor(ft::Color(ftxui::Color::Magenta));
 
             currentRow.push_back(currentBlock);
 
