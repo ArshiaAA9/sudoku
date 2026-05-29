@@ -89,8 +89,13 @@ TEST_CASE("hole punching", "[punchHoles]") {
 TEST_CASE("using fixed seed to check player input related functionalities", "[isPlayerInput]") {
     Sudoku::Sudoku game{};
     int seed = 1234;
-    int difficulty = 10;
+    int difficulty = 2;
     game.generateSudoku(difficulty, seed);
 
-    SECTION("[insertValue]") {}
+    SECTION("return values") {
+        REQUIRE(game.insertValue(2, 2, 2) == Sudoku::MoveResult::MISTAKE);
+        REQUIRE(game.insertValue(2, 2, 3) == Sudoku::MoveResult::SUCCEED);
+        REQUIRE(game.insertValue(2, 2, 2) == Sudoku::MoveResult::NOT_EMPTY);
+        REQUIRE(game.insertValue(8, 6, 5) == Sudoku::MoveResult::WIN);
+    }
 }

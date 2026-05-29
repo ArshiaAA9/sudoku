@@ -40,7 +40,7 @@ void Tui::run() {
 // --------------------------PRIVATES--------------------------
 
 void Tui::newGame() {
-    m_game.generateSudoku(m_difficulty, 1234);
+    m_game.generateSudoku(m_difficulty);
     m_selected.col = CENTER_COL;
     m_selected.row = CENTER_ROW;
     m_selected.value = m_board[CENTER_COL][CENTER_ROW];
