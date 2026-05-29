@@ -92,10 +92,15 @@ TEST_CASE("using fixed seed to check player input related functionalities", "[is
     int difficulty = 2;
     game.generateSudoku(difficulty, seed);
 
-    SECTION("return values") {
+    SECTION("player inputs") {
+
+        REQUIRE(game.isPlayerInput(2, 2) == 0);
         REQUIRE(game.insertValue(2, 2, 2) == Sudoku::MoveResult::MISTAKE);
+        REQUIRE(game.isPlayerInput(2, 2) == 0);
         REQUIRE(game.insertValue(2, 2, 3) == Sudoku::MoveResult::SUCCEED);
+        REQUIRE(game.isPlayerInput(2, 2) == 1);
         REQUIRE(game.insertValue(2, 2, 2) == Sudoku::MoveResult::NOT_EMPTY);
         REQUIRE(game.insertValue(8, 6, 5) == Sudoku::MoveResult::WIN);
+        SECTION("mistake count") { REQUIRE(game.mistakeCount() == 1); }
     }
 }
