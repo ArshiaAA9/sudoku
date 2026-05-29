@@ -5,6 +5,7 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/color.hpp>
 #include <string>
 
 void Tui::run(const BoardType& board) {
@@ -74,7 +75,7 @@ ft::Element Tui::createMainDom(const BoardType& board) {
             ft::filler(),
             ft::hbox({
                 ft::filler(),
-                gridbox(fillGridWithGrid(board)) | ft::center | ft::borderStyled(ft::HEAVY, ft::Color::White),
+                gridbox(fillGridWithGrid(board)) | ft::center | ft::bgcolor(ft::Color::White),
                 ft::filler(),
             }),
             ft::filler(),
@@ -85,8 +86,8 @@ ft::Element Tui::createMainDom(const BoardType& board) {
 ft::Element Tui::createGridBox(const BoardType& board, unsigned int startingCol, unsigned int startingRow) {
     std::vector<ft::Elements> result;
 
-    constexpr int CELL_WIDTH = 6;
-    constexpr int CELL_HEIGHT = 2;
+    constexpr int CELL_WIDTH = 7;
+    constexpr int CELL_HEIGHT = 3;
     // constexpr int FILLER_WIDTH = 1;
 
     // const ft::Element filler = ft::filler() | size(ft::WIDTH, ft::EQUAL, 4) | size(ft::HEIGHT, ft::EQUAL, 2);
@@ -96,15 +97,16 @@ ft::Element Tui::createGridBox(const BoardType& board, unsigned int startingCol,
         for (size_t col = startingCol * 3; col < startingCol * 3 + 3; col++) {
             ft::Element text =
                 (board[col][row] == 0) ? ft::text("  ") : ft::text(" " + std::to_string(board[col][row]) + " ");
+            text |= ft::color(ft::Color::Black);
             text |= ft::center;
             text |= ft::size(ft::WIDTH, ft::EQUAL, CELL_WIDTH);
             text |= ft::size(ft::HEIGHT, ft::EQUAL, CELL_HEIGHT);
 
-            if (col == m_selectedCol && row == m_selectedRow) text |= ft::bgcolor(ft::Color::Cyan);
+            if (col == m_selectedCol && row == m_selectedRow) text |= ft::bgcolor(ft::Color::GrayDark);
 
             currentRow.push_back(text);
 
-            if (col < startingCol * 3 + 2) currentRow.push_back(ft::separatorLight() | color(ft::Color::White));
+            if (col < startingCol * 3 + 2) currentRow.push_back(ft::separatorLight() | color(ft::Color::Black));
         }
         result.push_back(currentRow);
 
@@ -112,7 +114,7 @@ ft::Element Tui::createGridBox(const BoardType& board, unsigned int startingCol,
             ft::Elements separatorRow;
             separatorRow.reserve(6);
             for (int i = 0; i < 5; i++) {
-                separatorRow.push_back(ft::separatorLight() | color(ft::Color::White));
+                separatorRow.push_back(ft::separatorLight() | color(ft::Color::Black));
             }
             result.push_back(separatorRow);
         }
@@ -135,10 +137,13 @@ std::vector<ft::Elements> Tui::fillGridWithGrid(const BoardType& board) {
             ft::Element currentBlock = createGridBox(board, blockCol, blockRow);
             currentBlock |= ft::size(ft::WIDTH, ft::EQUAL, CELL_WIDTH);
             currentBlock |= ft::size(ft::HEIGHT, ft::EQUAL, CELL_HEIGHT);
+
+            // currentBlock |= ft::bgcolor(ft::Color(ftxui::Color::Magenta));
+
             currentRow.push_back(currentBlock);
 
             if (blockCol < 2) {
-                currentRow.push_back(ft::separatorHeavy() | color(ft::Color::White));
+                currentRow.push_back(ft::separatorHeavy() | color(ft::Color::Black));
             }
         }
         result.push_back(currentRow);
@@ -148,7 +153,7 @@ std::vector<ft::Elements> Tui::fillGridWithGrid(const BoardType& board) {
             separatorRow.reserve(10);
             if (blockRow != 2) {
                 for (int i = 0; i < 5; i++) {
-                    separatorRow.push_back(ft::separatorHeavy() | color(ft::Color::White));
+                    separatorRow.push_back(ft::separatorHeavy() | color(ft::Color::Black));
                 }
                 result.push_back(separatorRow);
             }
