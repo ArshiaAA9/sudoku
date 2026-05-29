@@ -4,7 +4,7 @@
 
 
 cmake_minimum_required(VERSION 3.16)
-project(sudoku VERSION 1.0.0 LANGUAGES CXX)
+project(sudotu VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,16 +50,16 @@ target_link_libraries(libTui PUBLIC
 )
 
 # ==================== MAIN EXECUTABLE ====================
-add_executable(bin
+add_executable(sudotu
     ${SOURCE_DIR}/main.cpp
 )
 
-target_link_libraries(bin PRIVATE
+target_link_libraries(sudotu PRIVATE
     libSudoku
     libTui
 )
 
-target_compile_options(bin PRIVATE
+target_compile_options(sudotu PRIVATE
     -Wall
     -Wextra
     -Wpedantic
