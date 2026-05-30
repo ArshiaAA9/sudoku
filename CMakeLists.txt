@@ -18,7 +18,7 @@ FetchContent_Declare(ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
   GIT_TAG v6.1.9
   GIT_SHALLOW TRUE
-  # FIND_PACKAGE_ARGS NAMES ftxui
+  FIND_PACKAGE_ARGS NAMES ftxui
 )
 FetchContent_MakeAvailable(ftxui)
 
